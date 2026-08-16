@@ -1,0 +1,8 @@
+com.example.iqoo_code.app-pngs-0 /home/ajay/Desktop/iqoo/iqoo-code/app/build/generated/res/pngs/debug
+com.example.iqoo_code.app-updated_navigation_xml-1 /home/ajay/Desktop/iqoo/iqoo-code/app/build/generated/updated_navigation_xml/debug
+com.example.iqoo_code.app-packageDebugResources-2 /home/ajay/Desktop/iqoo/iqoo-code/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.example.iqoo_code.app-packageDebugResources-3 /home/ajay/Desktop/iqoo/iqoo-code/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.example.iqoo_code.app-debug-4 /home/ajay/Desktop/iqoo/iqoo-code/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.example.iqoo_code.app-debug-5 /home/ajay/Desktop/iqoo/iqoo-code/app/src/debug/res
+com.example.iqoo_code.app-main-6 /home/ajay/Desktop/iqoo/iqoo-code/app/src/main/res
+gradleHome-0 /home/ajay/.gradle
