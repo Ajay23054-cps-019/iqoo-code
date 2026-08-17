@@ -52,6 +52,7 @@ object BuiltInCommands {
         override fun execute(args: List<String>, env: TerminalEnvironment): CommandResult {
             val target: File = when {
                 args.isEmpty() -> env.homeDirectory
+                args[0] == "-" -> env.previousDirectory
                 else -> env.resolvePath(args[0])
             }
             if (env.currentDirectory == target) return CommandResult.empty()

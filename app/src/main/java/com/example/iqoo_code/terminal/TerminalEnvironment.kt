@@ -25,6 +25,10 @@ class TerminalEnvironment(homeDir: File) {
     var currentDirectory: File = homeDirectory
         private set
 
+    /** Previous working directory, used by `cd -`. */
+    var previousDirectory: File = homeDirectory
+        private set
+
     /** Simple environment variable map, similar in spirit to a shell's env. */
     val environmentVariables: MutableMap<String, String> = mutableMapOf(
         "HOME" to homeDirectory.absolutePath,
@@ -107,7 +111,29 @@ class TerminalEnvironment(homeDir: File) {
         if (!isWithinSandbox(target)) {
             return "permission denied: ${target.absolutePath}"
         }
+        previousDirectory = currentDirectory
         currentDirectory = target
+        return null
+    }
+
+    /**
+     * Toggles between the current directory and the previous directory.
+     * Returns null on success or an error message.
+     */
+    fun togglePreviousDirectory(): String? {
+        val target = previousDirectory
+        if (!target.exists()) {
+            return "no such directory: ${target.absolutePath}"
+        }
+        if (!target.isDirectory) {
+            return "not a directory: ${target.absolutePath}"
+        }
+        if (!isWithinSandbox(target)) {
+            return "permission denied: ${target.absolutePath}"
+        }
+        val oldCurrent = currentDirectory
+        currentDirectory = target
+        previousDirectory = oldCurrent
         return null
     }
 
