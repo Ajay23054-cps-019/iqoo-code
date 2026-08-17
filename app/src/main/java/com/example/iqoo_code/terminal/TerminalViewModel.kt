@@ -42,6 +42,9 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
     )
     val uiState: StateFlow<TerminalUiState> = _uiState
 
+    private fun formatPrompt(path: String, command: String): String =
+        "$path $ $command"
+
     /** Local browsing index separate from environment history cursor, for UI "prev/next" buttons. */
     private var browseIndex: Int = -1
 
@@ -63,7 +66,7 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
     private fun submitCommand(command: String) {
         val promptLine = TerminalLine(
             type = TerminalLineType.INPUT,
-            text = "${environment.displayPath()} $ $command"
+            text = formatPrompt(environment.displayPath(), command)
         )
 
         _uiState.update {
