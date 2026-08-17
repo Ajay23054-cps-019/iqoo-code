@@ -1,34 +1,32 @@
 package com.example.iqoo_code.terminal
 
-/**
- * A parsed command: the command name plus its arguments.
- */
-data class ParsedCommand(
-    val name: String,
-    val args: List<String>
-) {
-    val isBlank: Boolean get() = name.isBlank()
-}
+import java.io.File
 
-/**
- * A small, dependency-free command line tokenizer.
- *
- * Supports:
- *  - collapsing multiple spaces
- *  - double-quoted strings, e.g. echo "Hello iQOO"
- *  - single-quoted strings, e.g. echo 'Hello iQOO'
- *  - basic escaping of quotes within a quoted string using backslash
- *
- * This intentionally does NOT implement a full Bash-like grammar
- * (no pipes, redirection, variable expansion, globbing, etc.) - that is
- * explicitly out of scope for v0.1.
- */
 object CommandParser {
 
-    fun parse(input: String): ParsedCommand {
+    fun parse(input: String): ParseResult {
         val tokens = tokenize(input)
-        if (tokens.isEmpty()) return ParsedCommand("", emptyList())
-        return ParsedCommand(tokens.first(), tokens.drop(1))
+        if (tokens.isEmpty()) return SingleCommand("", emptyList())
+
+        val segments = splitByPipe(tokens)
+        if (segments.size == 1) {
+            val seg = segments[0]
+            val stdin = extractStdinRedirect(seg)
+            val cleaned = seg.filterNot { it == "<" }
+            val (name, args) = extractCommand(cleaned)
+            return SingleCommand(name, args, stdin)
+        }
+
+        val commands = segments.map { seg ->
+            val (name, args) = extractCommand(seg)
+            SingleCommand(name, args)
+        }
+
+        val last = segments.last()
+        val stdoutRedirect = extractRedirect(last, ">", ">>")
+        val append = last.contains(">>")
+
+        return Pipeline(commands = commands, stdoutRedirect = stdoutRedirect, stdoutAppend = append)
     }
 
     private fun tokenize(input: String): List<String> {
@@ -68,12 +66,24 @@ object CommandParser {
                     }
                 }
                 c == '\'' -> {
+                    flush()
                     inSingleQuotes = true
                     tokenStarted = true
                 }
                 c == '"' -> {
+                    flush()
                     inDoubleQuotes = true
                     tokenStarted = true
+                }
+                c == '>' || c == '<' || c == '|' -> {
+                    if (c == '>' && i + 1 < input.length && input[i + 1] == '>') {
+                        flush()
+                        tokens.add(">>")
+                        i++
+                    } else {
+                        flush()
+                        tokens.add(c.toString())
+                    }
                 }
                 c.isWhitespace() -> {
                     flush()
@@ -87,5 +97,43 @@ object CommandParser {
         }
         flush()
         return tokens
+    }
+
+    private fun splitByPipe(tokens: List<String>): List<List<String>> {
+        val segments = mutableListOf<MutableList<String>>()
+        var current = mutableListOf<String>()
+        for (token in tokens) {
+            if (token == "|") {
+                segments.add(current)
+                current = mutableListOf()
+            } else {
+                current.add(token)
+            }
+        }
+        segments.add(current)
+        return segments
+    }
+
+    private fun extractStdinRedirect(tokens: List<String>): File? {
+        val idx = tokens.indexOf("<")
+        if (idx == -1 || idx + 1 >= tokens.size) return null
+        return File(tokens[idx + 1])
+    }
+
+    private fun extractRedirect(tokens: List<String>, vararg ops: String): File? {
+        for (op in ops) {
+            val idx = tokens.indexOf(op)
+            if (idx != -1 && idx + 1 < tokens.size) {
+                return File(tokens[idx + 1])
+            }
+        }
+        return null
+    }
+
+    private fun extractCommand(tokens: List<String>): Pair<String, List<String>> {
+        if (tokens.isEmpty()) return Pair("", emptyList())
+        val name = tokens.first()
+        val args = tokens.drop(1).filterNot { it == ">" || it == ">>" || it == "<" }
+        return Pair(name, args)
     }
 }

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.iqoo_code.app-mergeDebugResources-36:/values-or/values-or.xml",
+            "outputFile": "com.example.iqoo_code.app-mergeDebugResources-39:/values-or/values-or.xml",
             "map": [
                 {
                     "source": "/home/ajay/.gradle/caches/9.5.0/transforms/3030f08e0a5da5bed3e98b4328f92f52/transformed/foundation/res/values-or/values-or.xml",

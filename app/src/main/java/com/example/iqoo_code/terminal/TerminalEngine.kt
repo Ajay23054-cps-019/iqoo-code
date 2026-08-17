@@ -1,24 +1,11 @@
 package com.example.iqoo_code.terminal
 
-/**
- * Central dispatcher for terminal command execution.
- *
- * Flow: raw input string -> [CommandParser] -> built-in lookup
- * ([BuiltInCommands]) -> else [ExternalCommandExecutor].
- *
- * This class owns no Compose/Android state. [TerminalViewModel] is the only
- * caller, keeping UI concerns fully separated from command execution and
- * making it straightforward to later replace the internals with a native
- * (C++/JNI) runtime while keeping this same public surface.
- */
+import java.io.File
+
 class TerminalEngine(private val environment: TerminalEnvironment) {
 
     val env: TerminalEnvironment get() = environment
 
-    /**
-     * Executes [rawInput] and returns the resulting [CommandResult].
-     * Suspends because external command execution requires IO.
-     */
     suspend fun run(rawInput: String): CommandResult {
         val parsed = CommandParser.parse(rawInput)
         if (parsed.isBlank) {
@@ -27,23 +14,33 @@ class TerminalEngine(private val environment: TerminalEnvironment) {
 
         environment.addToHistory(rawInput)
 
-        val builtIn = BuiltInCommands.byName[parsed.name]
+        return when (parsed) {
+            is SingleCommand -> executeSingle(parsed)
+            is Pipeline -> PipelineExecutor.execute(parsed, environment)
+        }
+    }
+
+    private suspend fun executeSingle(command: SingleCommand): CommandResult {
+        val stdinFile = command.stdin
+        val stdinLines = if (stdinFile != null && stdinFile.exists()) {
+            try { stdinFile.readLines() } catch (_: Exception) { emptyList() }
+        } else emptyList()
+
+        val builtIn = BuiltInCommands.byName[command.name]
         if (builtIn != null) {
             return try {
-                builtIn.execute(parsed.args, environment)
+                builtIn.execute(command.args, environment, stdinLines)
             } catch (e: Exception) {
-                CommandResult.error("${parsed.name}: ${e.message ?: "unexpected error"}")
+                CommandResult.error("${command.name}: ${e.message ?: "unexpected error"}")
             }
         }
 
-        return runExternal(rawInput, parsed.name)
+        return runExternal(command.name, command.args.joinToString(" "), stdinLines)
     }
 
-    private suspend fun runExternal(rawInput: String, commandName: String): CommandResult {
-        val result = ExternalCommandExecutor.execute(rawInput, environment)
+    private suspend fun runExternal(commandName: String, rawArgs: String, stdinLines: List<String> = emptyList()): CommandResult {
+        val result = ExternalCommandExecutor.execute(rawArgs, environment, stdinLines)
 
-        // A negative exit code combined with no stderr output typically means
-        // the shell itself couldn't find/run the command.
         if (result.exitCode != 0 && result.stdout.isEmpty() && result.stderr.isEmpty()) {
             return CommandResult.error("$commandName: command not found")
         }

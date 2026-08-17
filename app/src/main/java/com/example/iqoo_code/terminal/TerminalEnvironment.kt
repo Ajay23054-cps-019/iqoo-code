@@ -1,5 +1,6 @@
 package com.example.iqoo_code.terminal
 
+import com.example.iqoo_code.fs.Workspace
 import java.io.File
 
 /**
@@ -16,10 +17,10 @@ import java.io.File
  * without changing any calling code, as long as the same public surface
  * is preserved.
  */
-class TerminalEnvironment(homeDir: File) {
+class TerminalEnvironment(private val workspace: Workspace) {
 
-    /** The terminal's home directory. Currently the app's private files dir. */
-    val homeDirectory: File = homeDir.also { it.mkdirs() }
+    /** The terminal's home directory. Delegates to workspace root. */
+    val homeDirectory: File = workspace.projectsDir.parentFile!!.also { it.mkdirs() }
 
     /** Current working directory. Starts at [homeDirectory]. */
     var currentDirectory: File = homeDirectory
@@ -54,6 +55,11 @@ class TerminalEnvironment(homeDir: File) {
         historyIndex = _history.size
     }
 
+    fun clearHistory() {
+        _history.clear()
+        historyIndex = _history.size
+    }
+
     fun previousHistory(): String? {
         if (_history.isEmpty()) return null
         if (historyIndex > 0) historyIndex--
@@ -77,9 +83,9 @@ class TerminalEnvironment(homeDir: File) {
      */
     fun resolvePath(rawPath: String): File {
         return if (rawPath.startsWith("/")) {
-            File(rawPath).normalizeSafe()
+            workspace.resolve(rawPath)
         } else {
-            File(currentDirectory, rawPath).normalizeSafe()
+            workspace.resolve(File(currentDirectory, rawPath).path)
         }
     }
 
@@ -137,27 +143,13 @@ class TerminalEnvironment(homeDir: File) {
         return null
     }
 
-    private fun File.normalizeSafe(): File {
-        return try {
-            File(this.path).canonicalFile
-        } catch (_: Exception) {
-            File(this.path).absoluteFile
-        }
-    }
-
     /**
      * Returns true if [file] lives inside the sandboxed home directory
      * tree. Used by destructive commands (e.g. rm) to avoid touching
      * anything outside the app's permitted storage.
      */
     fun isWithinSandbox(file: File): Boolean {
-        val homePath = homeDirectory.canonicalPath
-        val targetPath = try {
-            file.canonicalPath
-        } catch (_: Exception) {
-            file.absolutePath
-        }
-        return targetPath == homePath || targetPath.startsWith(homePath + File.separator)
+        return workspace.isWithinRoot(file)
     }
 }
 

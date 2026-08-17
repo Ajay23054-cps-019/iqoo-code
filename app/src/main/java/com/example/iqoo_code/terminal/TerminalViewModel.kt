@@ -1,5 +1,7 @@
 package com.example.iqoo_code.terminal
 
+import android.content.Context
+import com.example.iqoo_code.fs.Workspace
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,43 +11,63 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 
-
-/**
- * UI-facing state for the terminal screen. Immutable snapshot consumed by
- * Compose.
- */
 data class TerminalUiState(
     val lines: List<TerminalLine> = emptyList(),
     val input: String = "",
     val promptPath: String = "~",
-    val isRunning: Boolean = false
+    val isRunning: Boolean = false,
+    val sessions: List<String> = emptyList(),
+    val activeSessionIndex: Int = 0,
+    val settings: TerminalSettings = TerminalSettings()
 )
 
-/**
- * Bridges [TerminalScreen] (Compose UI) and [TerminalEngine] (business
- * logic). Owns no filesystem/process logic itself - it only forwards user
- * intents to the engine and republishes results as UI state.
- */
-class TerminalViewModel(homeDirectory: File) : ViewModel() {
+class TerminalViewModel(
+    private val context: Context,
+    private val homeDirectory: File
+) : ViewModel() {
 
-    private val environment = TerminalEnvironment(homeDirectory)
-    private val engine = TerminalEngine(environment)
+    private val workspace = Workspace(homeDirectory)
+    private val sessionManager = TerminalSessionManager(workspace)
+    private val settingsManager = TerminalSettingsManager(context)
 
     private val _uiState = MutableStateFlow(
         TerminalUiState(
-            lines = listOf(
-                TerminalLine(TerminalLineType.SYSTEM, "iQOO Code Terminal v0.1"),
-                TerminalLine(TerminalLineType.SYSTEM, "Type 'help' for a list of commands.")
-            ),
-            promptPath = environment.displayPath()
+            sessions = sessionManager.sessions.map { it.name },
+            activeSessionIndex = sessionManager.activeIndex
         )
     )
     val uiState: StateFlow<TerminalUiState> = _uiState
 
+    init {
+        viewModelScope.launch {
+            sessionManager.activeSession().lines.addAll(
+                listOf(
+                    TerminalLine(TerminalLineType.SYSTEM, "iQOO Code Terminal v0.2"),
+                    TerminalLine(TerminalLineType.SYSTEM, "Type 'help' for a list of commands.")
+                )
+            )
+            refreshLines()
+            settingsManager.settings.collect { settings ->
+                _uiState.update { it.copy(settings = settings) }
+            }
+        }
+    }
+
+    private fun refreshLines() {
+        _uiState.update { current ->
+            val session = sessionManager.activeSession()
+            current.copy(
+                lines = session.lines.toList(),
+                promptPath = session.environment.displayPath(),
+                sessions = sessionManager.sessions.map { it.name },
+                activeSessionIndex = sessionManager.activeIndex
+            )
+        }
+    }
+
     private fun formatPrompt(path: String, command: String): String =
         "$path $ $command"
 
-    /** Local browsing index separate from environment history cursor, for UI "prev/next" buttons. */
     private var browseIndex: Int = -1
 
     fun onInputChange(newValue: String) {
@@ -64,11 +86,13 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
     }
 
     private fun submitCommand(command: String) {
+        val session = sessionManager.activeSession()
         val promptLine = TerminalLine(
             type = TerminalLineType.INPUT,
-            text = formatPrompt(environment.displayPath(), command)
+            text = formatPrompt(session.environment.displayPath(), command)
         )
 
+        session.lines.add(promptLine)
         _uiState.update {
             it.copy(
                 lines = it.lines + promptLine,
@@ -79,15 +103,11 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
         browseIndex = -1
 
         viewModelScope.launch {
-            val result = engine.run(command)
-
+            val result = session.engine.run(command)
+            session.lines.addAll(result.output)
+            refreshLines()
             _uiState.update { current ->
-                val baseLines = if (result.didClear) emptyList() else current.lines
-                current.copy(
-                    lines = baseLines + result.output,
-                    promptPath = environment.displayPath(),
-                    isRunning = false
-                )
+                current.copy(isRunning = false)
             }
 
             if (result.didExit) {
@@ -97,34 +117,28 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
     }
 
     private fun resetSession() {
-        environment.let {
-            // Return to home directory; keep environment vars, clear visible history.
+        val session = sessionManager.activeSession()
+        session.environment.let {
             it.changeDirectory(it.homeDirectory)
         }
-        _uiState.update {
-            it.copy(
-                lines = listOf(
-                    TerminalLine(TerminalLineType.SYSTEM, "Session reset."),
-                    TerminalLine(TerminalLineType.SYSTEM, "Type 'help' for a list of commands.")
-                ),
-                input = "",
-                promptPath = environment.displayPath()
-            )
-        }
+        session.lines.clear()
+        session.lines.add(TerminalLine(TerminalLineType.SYSTEM, "Session reset."))
+        session.lines.add(TerminalLine(TerminalLineType.SYSTEM, "Type 'help' for a list of commands."))
+        refreshLines()
     }
 
-    /** Browses to the previous command in history (e.g. bound to an "up" UI affordance). */
     fun browsePrevious() {
-        val history = environment.history
+        val session = sessionManager.activeSession()
+        val history = session.environment.history
         if (history.isEmpty()) return
         if (browseIndex == -1) browseIndex = history.size
         if (browseIndex > 0) browseIndex--
         _uiState.update { it.copy(input = history.getOrElse(browseIndex) { "" }) }
     }
 
-    /** Browses to the next command in history (e.g. bound to a "down" UI affordance). */
     fun browseNext() {
-        val history = environment.history
+        val session = sessionManager.activeSession()
+        val history = session.environment.history
         if (history.isEmpty() || browseIndex == -1) return
         if (browseIndex < history.size - 1) {
             browseIndex++
@@ -135,11 +149,40 @@ class TerminalViewModel(homeDirectory: File) : ViewModel() {
         }
     }
 
-    class Factory(private val homeDirectory: File) : ViewModelProvider.Factory {
+    fun switchSession(index: Int): Boolean {
+        val switched = sessionManager.switchTo(index)
+        if (switched) {
+            browseIndex = -1
+            refreshLines()
+        }
+        return switched
+    }
+
+    fun newSession(): TerminalSession {
+        val session = sessionManager.addSession()
+        browseIndex = -1
+        refreshLines()
+        return session
+    }
+
+    fun closeSession(index: Int): Boolean {
+        val removed = sessionManager.removeSession(index)
+        if (removed) {
+            browseIndex = -1
+            refreshLines()
+        }
+        return removed
+    }
+
+    fun complete(input: String): List<String> {
+        val session = sessionManager.activeSession()
+        return CompletionEngine.complete(input, session.environment.currentDirectory, session.environment.path)
+    }
+
+    class Factory(private val context: Context, private val homeDirectory: File) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             @Suppress("UNCHECKED_CAST")
-            return TerminalViewModel(homeDirectory) as T
+            return TerminalViewModel(context, homeDirectory) as T
         }
     }
 }
-

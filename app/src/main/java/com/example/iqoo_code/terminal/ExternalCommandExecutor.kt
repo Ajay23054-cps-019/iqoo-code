@@ -4,20 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.util.concurrent.TimeUnit
 
-/**
- * Executes commands that are not recognized as built-ins by shelling out to
- * the Android system shell via [ProcessBuilder].
- *
- * This is intentionally isolated behind a small interface-like object so it
- * can later be swapped for a native (C++/JNI) process/runtime implementation
- * without touching [TerminalEngine] call sites beyond this class.
- *
- * No root, no privilege escalation, no sandbox escape - this simply runs
- * `/system/bin/sh -c "<command>"` with the app's own process permissions,
- * exactly like any other unprivileged Android app could.
- */
 object ExternalCommandExecutor {
 
     data class ExternalResult(
@@ -28,7 +17,7 @@ object ExternalCommandExecutor {
 
     private const val TIMEOUT_SECONDS = 15L
 
-    suspend fun execute(rawCommand: String, env: TerminalEnvironment): ExternalResult =
+    suspend fun execute(rawCommand: String, env: TerminalEnvironment, stdinLines: List<String> = emptyList()): ExternalResult =
         withContext(Dispatchers.IO) {
             try {
                 val processBuilder = ProcessBuilder("/system/bin/sh", "-c", rawCommand)
@@ -40,6 +29,12 @@ object ExternalCommandExecutor {
                 }
 
                 val process = processBuilder.start()
+
+                if (stdinLines.isNotEmpty()) {
+                    OutputStreamWriter(process.outputStream).use { writer ->
+                        stdinLines.forEach { writer.write(it); writer.write("\n") }
+                    }
+                }
 
                 val stdout = mutableListOf<String>()
                 val stderr = mutableListOf<String>()

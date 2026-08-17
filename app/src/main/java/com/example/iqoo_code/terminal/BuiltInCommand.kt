@@ -1,13 +1,10 @@
 package com.example.iqoo_code.terminal
 
-/**
- * Result of executing any command (built-in or external).
- */
+import java.io.File
+
 data class CommandResult(
     val output: List<TerminalLine> = emptyList(),
-    /** True if the "exit" command was invoked and the session should reset. */
     val didExit: Boolean = false,
-    /** True if "clear" was invoked and prior output should be wiped. */
     val didClear: Boolean = false
 ) {
     companion object {
@@ -19,18 +16,8 @@ data class CommandResult(
     }
 }
 
-/**
- * Contract implemented by every built-in terminal command.
- *
- * Built-ins operate purely on [TerminalEnvironment] and their arguments -
- * they never touch Compose or Android UI state directly.
- */
 interface BuiltInCommand {
-    /** The command's invocation name, e.g. "pwd". */
     val name: String
-
-    /** Short one-line description shown by `help`. */
     val description: String
-
-    fun execute(args: List<String>, env: TerminalEnvironment): CommandResult
+    fun execute(args: List<String>, env: TerminalEnvironment, stdin: List<String> = emptyList()): CommandResult
 }

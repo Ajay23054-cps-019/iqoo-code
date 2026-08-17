@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.iqoo_code.app-mergeDebugResources-36:/values-hu/values-hu.xml",
+            "outputFile": "com.example.iqoo_code.app-mergeDebugResources-39:/values-hu/values-hu.xml",
             "map": [
                 {
                     "source": "/home/ajay/.gradle/caches/9.5.0/transforms/3538e5f1f8df0e8dd3f6b90beb011461/transformed/material3/res/values-hu/values-hu.xml",

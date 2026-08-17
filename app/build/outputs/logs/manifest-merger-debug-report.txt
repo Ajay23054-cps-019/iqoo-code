@@ -49,6 +49,9 @@ MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.9.4] /home/a
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.9.4] /home/ajay/.gradle/caches/9.5.0/transforms/4d88dc966033ae7d075a20f22aa3c4d6/transformed/lifecycle-viewmodel-compose-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.ui:ui-android:1.12.0] /home/ajay/.gradle/caches/9.5.0/transforms/522adfc2fef992f0d212015b57f601e1/transformed/ui/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] /home/ajay/.gradle/caches/9.5.0/transforms/6b38ceb6c6994445802a8faf1c798df0/transformed/ui-test-manifest-1.12.0/AndroidManifest.xml:17:1-29:12
+MERGED from [androidx.datastore:datastore-core-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/5a3fed741fa29475c905387fe0cfc05b/transformed/datastore-core-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/bf24a337f55d380e13406942341f044e/transformed/datastore-release/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/fc1d46adc32ea7d9d03b11f18d7d779c/transformed/datastore-preferences-release/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/ajay/.gradle/caches/9.5.0/transforms/ccdbf7ea1fca75b910693e0dd7dfa0d1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/cb1adfc9a8a4ac1b2c4a15548602ea35/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.core:core-viewtree:1.0.0] /home/ajay/.gradle/caches/9.5.0/transforms/1298b2e02b1cdb3d351981de1bc6cf12/transformed/core-viewtree-1.0.0/AndroidManifest.xml:2:1-7:12
@@ -224,6 +227,12 @@ MERGED from [androidx.compose.ui:ui-android:1.12.0] /home/ajay/.gradle/caches/9.
 MERGED from [androidx.compose.ui:ui-android:1.12.0] /home/ajay/.gradle/caches/9.5.0/transforms/522adfc2fef992f0d212015b57f601e1/transformed/ui/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] /home/ajay/.gradle/caches/9.5.0/transforms/6b38ceb6c6994445802a8faf1c798df0/transformed/ui-test-manifest-1.12.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] /home/ajay/.gradle/caches/9.5.0/transforms/6b38ceb6c6994445802a8faf1c798df0/transformed/ui-test-manifest-1.12.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/5a3fed741fa29475c905387fe0cfc05b/transformed/datastore-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/5a3fed741fa29475c905387fe0cfc05b/transformed/datastore-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/bf24a337f55d380e13406942341f044e/transformed/datastore-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/bf24a337f55d380e13406942341f044e/transformed/datastore-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/fc1d46adc32ea7d9d03b11f18d7d779c/transformed/datastore-preferences-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/fc1d46adc32ea7d9d03b11f18d7d779c/transformed/datastore-preferences-release/AndroidManifest.xml:20:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/ajay/.gradle/caches/9.5.0/transforms/ccdbf7ea1fca75b910693e0dd7dfa0d1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /home/ajay/.gradle/caches/9.5.0/transforms/ccdbf7ea1fca75b910693e0dd7dfa0d1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/ajay/.gradle/caches/9.5.0/transforms/cb1adfc9a8a4ac1b2c4a15548602ea35/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
