@@ -25,7 +25,7 @@ class TerminalEnvironment(homeDir: File) {
     var currentDirectory: File = homeDirectory
         private set
 
-    /** Previous working directory, used by `cd -`. */
+    /** Previous working directory, used by `cd -` to toggle back. */
     var previousDirectory: File = homeDirectory
         private set
 
